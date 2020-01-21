@@ -1,0 +1,32 @@
+import uuid from 'uuid';
+import * from './libs/dynamodb-lib';
+import { success, failure } from './libs/response-lib';
+
+// If DB region is different than
+// region of Lambda funtion then
+// uncomment last line here and
+// update the region now
+// AWS.config.update({ region: "my-region" });
+
+export async function main(event, context) {
+  const data = JSON.parse(event.body);
+
+  const params = {
+    TableName: process.env.tableName,
+
+    Item: {
+      userId: event.requestContext.identity.cognitoIdentityId,
+      noteId: uuid.v1(),
+      content: data.content,
+      attachment: data.attachment,
+      createAt: Date.now(),
+    },
+  };
+
+  try {
+    await dynamoDbLib.call("put", params);
+    return success(params.Item);
+  } catch (e) {
+    return failure({ status: false });
+  }
+}
